@@ -1,1 +1,0 @@
-### Personalized notes regarding my studies in the Algorithm Design and Analysis course at FGV EMAp's Data Science and Artificial Intelligence undergraduate program, taught by Professor Thiago Araújo.
