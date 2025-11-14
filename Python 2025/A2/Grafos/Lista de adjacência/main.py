@@ -2,9 +2,7 @@ from graph_list import *
 from funcoes import *
 from dfs import *
 
-# ======================
 # 1. BASIC GRAPH TESTS
-# ======================
 print("=== BASIC GRAPH TESTS ===")
 
 # Create empty graph
@@ -41,9 +39,7 @@ print("###############################")
 print("Edge list:")
 g1.print_edges()
 
-# ======================
 # 2. SUBGRAPH TESTS
-# ======================
 print("\n=== SUBGRAPH TESTS ===")
 
 # Create graphs for subgraph testing
@@ -65,9 +61,7 @@ g4.add_edge(1, 2)
 print(f"g2 is subgraph of g1? {is_subgraph(g1, g2)}")
 print(f"g4 is subgraph of g3? {is_subgraph(g3, g4)}")
 
-# ======================
 # 3. PATH TESTS
-# ======================
 print("\n=== PATH TESTS ===")
 
 g5 = GraphList(5)
@@ -82,9 +76,7 @@ print(f"Path [0, 1, 2, 3] (valid and simple): {is_path(g5, [0, 1, 2, 3])}")
 print(f"Path [0, 1, 2, 1, 2] (valid, not simple): {is_path(g5, [0, 1, 2, 1, 2])}")
 print(f"Path [0, 1, 2, 3, 1] (invalid): {is_path(g5, [0, 1, 2, 3, 1])}")
 
-# ======================
 # 4. DFS TESTS
-# ======================
 print("\n=== DFS TESTS ===")
 
 # DFS on normal graph
@@ -117,9 +109,7 @@ g8.add_edge(5, 0)  # Creates cycle
 print("\nDFS on g8 (graph with cycle):")
 dfs(g8)
 
-# ======================
 # 5. TOPOLOGICAL SORTING TESTS
-# ======================
 print("\n=== TOPOLOGICAL SORTING TESTS ===")
 
 # Test acyclic graph
