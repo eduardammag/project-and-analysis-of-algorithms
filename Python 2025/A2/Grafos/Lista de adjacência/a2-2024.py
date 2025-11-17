@@ -1,9 +1,7 @@
-"""
-Questão 1 (3 pontos)
-
-Uma organização ambiental desenvolveu um sistema para monitoramento de florestas 
-cuja comunicação é baseada em uma rede de sensores sem fio. 
-Um sensor A consegue enviar uma mensagem para um sensor B diretamente se a distância entre eles 
+""" 1) Uma organização ambiental desenvolveu um sistema para 
+monitoramento de florestas cuja comunicação é baseada em uma 
+rede de sensores sem fio. Um sensor A consegue enviar uma 
+mensagem para um sensor B diretamente se a distância entre eles 
 for menor ou igual ao raio de transmissão s.r em metros.
 
 Dado um conjunto de sensores S, em que cada elemento possui uma localização (s.x, s.y) 
@@ -17,29 +15,19 @@ que a mensagem irá percorrer:
 — em seguida, os sensores utilizados para enviar a resposta de sf até si.
 
 Caso não seja possível estabelecer a comunicação, o algoritmo deve indicar isso.
-Analise a complexidade do algoritmo proposto.
-
-É permitido fazer referência a estruturas de dados da aula.
-"""
+Analise a complexidade do algoritmo proposto."""
 
 import math
 import heapq
 
-# -----------------------------------------------------------
-# Função que calcula a distância euclidiana entre dois pontos
-# -----------------------------------------------------------
 def distancia(a, b):
-    # Fórmula da distância: sqrt((x1-x2)^2 + (y1-y2)^2)
     return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
 
-
-# -----------------------------------------------------------
 # Constrói o grafo baseado nas capacidades dos sensores
 # sensores[i] = (x, y, r)
 # Um sensor i pode se conectar a j se a distância entre eles
 # for <= ao raio de ambos.
 # O grafo é representado como lista de adjacências.
-# -----------------------------------------------------------
 def construir_grafo(sensores):
     n = len(sensores)                        # número de sensores (vértices)
     adj = [[] for _ in range(n)]             # lista de adjacências
@@ -60,10 +48,8 @@ def construir_grafo(sensores):
     return adj
 
 
-# -----------------------------------------------------------
 # Implementação clássica do Dijkstra com min-heap (heapq)
 # Retorna o caminho mínimo entre 'start' e 'end'
-# -----------------------------------------------------------
 def dijkstra(adj, start, end):
     n = len(adj)
     dist = [float('inf')] * n                # distâncias mínimas
@@ -103,10 +89,8 @@ def dijkstra(adj, start, end):
     return path
 
 
-# -----------------------------------------------------------
 # Monta grafo e calcula rota total si → sf e sf → si
 # Se algum sentido não possuir caminho, retorna None
-# -----------------------------------------------------------
 def rota_completa(sensores, si, sf):
     adj = construir_grafo(sensores)          # constrói o grafo
     ida = dijkstra(adj, si, sf)              # caminho de ida
@@ -119,9 +103,7 @@ def rota_completa(sensores, si, sf):
     return ida + volta[1:]
 
 
-# -----------------------------------------------------------
 # ANÁLISE COMPLETA DE COMPLEXIDADE
-# -----------------------------------------------------------
 
 # construir_grafo(sensores):
 #   - Loop duplo sobre todos os pares (i, j)
@@ -149,26 +131,17 @@ def rota_completa(sensores, si, sf):
 #              Θ(n² log n)
 #
 # No pior caso (grafo denso).
-# -----------------------------------------------------------
 
 
-"""
-Questão 2 (2 pontos)
-
-Considere um grafo G = (V, E) conexo e não-dirigido.
+""" 2) Considere um grafo G = (V, E) conexo e não-dirigido.
 Dizemos que uma aresta e ∈ E é uma ponte se sua remoção produzir um grafo G' não-conexo.
 
 a) Se existir uma aresta e = (vi, vj) que não é uma ponte podemos afirmar 
    que existe um ciclo em G que contém os vértices vi e vj. Por quê?
 
 b) Projete um algoritmo que receba uma aresta e = (vi, vj) e determine 
-   se a mesma é uma ponte.
+   se a mesma é uma ponte. """
 
-Não é permitido apenas fazer referência a algoritmos da aula, 
-é necessário descrever.
-"""
-
-# -----------------------------------------------------------
 # Verifica se uma aresta (u, v) é ponte em um grafo não-direcionado.
 #
 # Uma aresta é ponte se, ao removê-la, o número de componentes
@@ -177,7 +150,6 @@ Não é permitido apenas fazer referência a algoritmos da aula,
 #
 # O algoritmo usa DFS com arrays tin[] e low[], técnica clássica
 # de Tarjan para encontrar pontes.
-# -----------------------------------------------------------
 
 def eh_ponte(adj, u, v):
     """
@@ -192,11 +164,9 @@ def eh_ponte(adj, u, v):
     timer = [0]                        # contador mutável usado dentro da DFS
     is_bridge = [False]                # será marcado como True se (u, v) for ponte
 
-    # -------------------------------------------------------
     # DFS para calcular tin[x] e low[x]
     # parent: pai no DFS (para não contar aresta de retorno
     # como aresta de árvore)
-    # -------------------------------------------------------
     def dfs(x, parent):
         visited[x] = True
         tin[x] = low[x] = timer[0]     # tanto tin quanto low começam iguais
@@ -237,9 +207,7 @@ def eh_ponte(adj, u, v):
     return is_bridge[0]
 
 
-# -----------------------------------------------------------
 # ANÁLISE DE COMPLEXIDADE
-# -----------------------------------------------------------
 
 # Seja V = número de vértices e E = número de arestas.
 #
@@ -257,12 +225,8 @@ def eh_ponte(adj, u, v):
 # Complexidade espacial:
 #   Arrays visited, tin, low → O(V)
 #   Pilha recursiva da DFS → O(V) no pior caso
-# -----------------------------------------------------------
 
-"""
-Questão 3 (3 pontos)
-
-Uma empresa está projetando a infraestrutura de comunicação para sua nova planta industrial.
+""" 3) Uma empresa está projetando a infraestrutura de comunicação para sua nova planta industrial.
 A planta possui diversos prédios que precisam ser conectados através de fibra óptica.
 Para cada par de prédios existe um custo para instalação e uma largura de banda máxima.
 
@@ -283,12 +247,10 @@ ou indicar se é impossível. Analise a complexidade.
 
 from heapq import heappush, heappop
 
-# -----------------------------------------------------------
 # PRIM – Gera a Árvore Geradora Mínima (AGM)
 #
 # adj[u] = lista de tuplas (v, peso, banda)
 # A AGM é representada como lista de arestas (u, v)
-# -----------------------------------------------------------
 def prim_agm(adj):
     """
     Executa PRIM para gerar a árvore geradora mínima.
@@ -323,11 +285,9 @@ def prim_agm(adj):
     return mst_edges
 
 
-# -----------------------------------------------------------
 # BFS filtrando por banda mínima
 # Verifica se há caminho entre u e v usando apenas arestas
 # cuja banda >= W.
-# -----------------------------------------------------------
 def existe_caminho(adj, u, v, W):
     """
     Verifica se existe caminho entre u e v usando apenas arestas banda >= W.
@@ -353,11 +313,9 @@ def existe_caminho(adj, u, v, W):
     return False                # nenhum caminho respeitou banda mínima
 
 
-# -----------------------------------------------------------
 # Verifica redundância para cada aresta da AGM.
 # A redundância exige que entre cada aresta (u, v) da AGM
 # exista um segundo caminho alternativo que respeite banda >= W.
-# -----------------------------------------------------------
 def redundancia(adj, W):
     """
     adj[u] = (v, custo, banda)
@@ -383,9 +341,7 @@ def redundancia(adj, W):
     return extras
 
 
-# -----------------------------------------------------------
 # ANÁLISE COMPLETA DE COMPLEXIDADE
-# -----------------------------------------------------------
 
 # Suponha:
 #   V = número de vértices
@@ -422,4 +378,3 @@ def redundancia(adj, W):
 #
 # Em grafos densos → Θ(V³)
 # Em grafos esparsos → Θ(V²)
-# -----------------------------------------------------------

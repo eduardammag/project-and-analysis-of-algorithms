@@ -2,7 +2,6 @@ from graph_list import GraphList
 import heapq
 from collections import deque
 
-
 """1) Uma enchente inundou uma cidade representada 
 por uma grade N x M. Cada célula pode ser:
 . (terreno seco)
@@ -330,13 +329,6 @@ def pontes_no_grafo(graph: GraphList):
     return pontes
 
 
-
-
-
-###########################################################################################################################################
-
-
-
 """ 6)Em uma antiga cidade mágica, existem N portais conectados por passagens unidirecionais. 
 Cada passagem leva um certo tempo para ser atravessada.
 Um aprendiz de mago deseja saber o menor tempo possível para ir do portal 1 até o portal N.
@@ -473,26 +465,19 @@ def custo_minimo_reinos(graph: GraphList):
     return total
 
 
-"""8)Você recebeu o mapa de uma floresta dividida em N x M células.
+"""8)Você recebeu o mapa de uma floresta dividida em N x M células. 
 Cada célula pode conter:
-
 . (terreno livre)
-
 # (árvore gigante intransponível)
-
 S (posição inicial do explorador)
-
 T (tesouro escondido)
-
-Descubra se o explorador consegue chegar até o tesouro movendo-se apenas nas quatro direções (cima, baixo, esquerda, direita) por terrenos livres."""
-
-from collections import deque
+Descubra se o explorador consegue chegar até o tesouro movendo-se
+apenas nas quatro direções (cima, baixo, esquerda, direita) por terrenos livres."""
 
 def pode_chegar_tesouro(mapa):
     N = len(mapa)
     M = len(mapa[0])
 
-    # acha S
     for i in range(N):
         for j in range(M):
             if mapa[i][j] == 'S':
@@ -501,7 +486,6 @@ def pode_chegar_tesouro(mapa):
     fila = deque([(sx, sy)])
     visit = [[False]*M for _ in range(N)]
     visit[sx][sy] = True
-
     dirs = [(1,0),(-1,0),(0,1),(0,-1)]
 
     while fila:
