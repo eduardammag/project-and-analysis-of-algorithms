@@ -27,23 +27,23 @@ def distancia(a, b):
 # sensores[i] = (x, y, r)
 # Um sensor i pode se conectar a j se a distância entre eles
 # for <= ao raio de ambos.
-# O grafo é representado como lista de adjacências.
 def construir_grafo(sensores):
-    n = len(sensores)                        # número de sensores (vértices)
-    adj = [[] for _ in range(n)]             # lista de adjacências
+    n = len(sensores)  # (vértices)
+    adj = [[] for _ in range(n)]
 
-    # Verifica cada par de sensores (i, j)
+    # Avalia todos os pares ordenados (i, j)
     for i in range(n):
-        x1, y1, r1 = sensores[i]
+        x1, y1, r1 = sensores[i]   
         for j in range(n):
-            if i == j:                       # ignora laço próprio
+            if i == j:
                 continue
-            x2, y2, r2 = sensores[j]
+            x2, y2, r2 = sensores[j]  
             d = distancia((x1, y1), (x2, y2))
-
-            # Se ambos podem transmitir um ao outro
-            if d <= r1 and d <= r2:
-                adj[i].append((j, d))        # adiciona aresta i → j com peso d
+            # Criamos aresta i → j *somente se* o raio de i é suficiente
+            # para cobrir a distância até j.
+            if d <= r1:
+                # Adiciona aresta saindo de i para j, com peso = distância
+                adj[i].append((j, d))
 
     return adj
 
@@ -55,86 +55,51 @@ def dijkstra(adj, start, end):
     dist = [float('inf')] * n                # distâncias mínimas
     parent = [-1] * n                        # para reconstruir caminho
     dist[start] = 0                          # distância do início é 0
-
     pq = [(0, start)]                        # heap (distância, vértice)
-
     while pq:
         d, u = heapq.heappop(pq)             # pega vértice de menor distância atual
-
-        if d > dist[u]:                      # ignora entrada atrasada
+        if d > dist[u]:                     
             continue
-
         if u == end:                         # se chegou ao destino, pode parar
             break
-
         # relaxamento das arestas
         for v, w in adj[u]:
             if dist[u] + w < dist[v]:
                 dist[v] = dist[u] + w
                 parent[v] = u
                 heapq.heappush(pq, (dist[v], v))
-
     # se não alcança o destino
     if dist[end] == float('inf'):
         return None
-
     # reconstrói o caminho em ordem reversa
     path = []
     cur = end
     while cur != -1:
         path.append(cur)
         cur = parent[cur]
-
     path.reverse()                           # inverte para ordem correta
     return path
 
 
-# Monta grafo e calcula rota total si → sf e sf → si
-# Se algum sentido não possuir caminho, retorna None
 def rota_completa(sensores, si, sf):
     adj = construir_grafo(sensores)          # constrói o grafo
     ida = dijkstra(adj, si, sf)              # caminho de ida
     volta = dijkstra(adj, sf, si)            # caminho de volta
-
     if ida is None or volta is None:         # se qualquer lado for impossível
         return None
-
-    # remove duplicação do vértice central (sf)
-    return ida + volta[1:]
+    return ida + volta[1:]                  # remove duplicação do vértice central (sf)
 
 
-# ANÁLISE COMPLETA DE COMPLEXIDADE
-
-# construir_grafo(sensores):
-#   - Loop duplo sobre todos os pares (i, j)
-#   - Para cada par, cálculo O(1) de distância
-#   - Portanto:  O(n^2)
-#
-# dijkstra(adj):
-#   - Usa heapq, custo para push/pop = O(log n)
-#   - Cada aresta relaxada no máximo 1 vez
-#   - Tempo total: O(E log V)
-#
+# ANÁLISE DE COMPLEXIDADE
 # rota_completa():
 #   - Chama construir_grafo → O(n^2)
 #   - Chama dijkstra duas vezes → 2 * O(E log V)
 #   - Como o grafo pode ter até E = O(n^2) arestas no pior caso,
-#     então:
-#         O(E log V) = O(n^2 log n)
-#
-# COMPLEXIDADE TOTAL:
-#     O(n^2) + 2 * O(n^2 log n)
-#     = O(n^2 log n)
-#
-# Portanto, a função rota_completa tem complexidade:
-#
-#              Θ(n² log n)
-#
-# No pior caso (grafo denso).
-
+#     então: Θ(n² log n)
 
 """ 2) Considere um grafo G = (V, E) conexo e não-dirigido.
-Dizemos que uma aresta e ∈ E é uma ponte se sua remoção produzir um grafo G' não-conexo.
+Dizemos que uma aresta e ∈ E é uma ponte se sua remoção
+produzir um grafo G' não-conexo.
 
 a) Se existir uma aresta e = (vi, vj) que não é uma ponte podemos afirmar 
    que existe um ciclo em G que contém os vértices vi e vj. Por quê?
@@ -229,152 +194,105 @@ def eh_ponte(adj, u, v):
 """ 3) Uma empresa está projetando a infraestrutura de comunicação para sua nova planta industrial.
 A planta possui diversos prédios que precisam ser conectados através de fibra óptica.
 Para cada par de prédios existe um custo para instalação e uma largura de banda máxima.
-
 A engenharia já definiu o conjunto mínimo de conexões necessárias para interligar 
 todos os prédios minimizando custo total (i.e., uma Árvore Geradora Mínima).
-
 A equipe de TI deseja tornar o projeto tolerante a falhas inserindo redundâncias — 
 ou seja, para cada par de prédios deve existir mais de um caminho na rede.
-
 Dada a topologia completa da planta (com custos e larguras de banda possíveis), 
 o conjunto de conexões já escolhido, e um requisito mínimo de velocidade W, 
 projete um algoritmo que decide se é possível tornar a rede tolerante a falhas 
-garantindo redundância para todas as conexões.
-
+garantindo redundância para todas as conexões. 
 O algoritmo deve retornar a lista de conexões redundantes com banda ≥ W, 
 ou indicar se é impossível. Analise a complexidade.
 """
+from collections import deque
 
-from heapq import heappush, heappop
+# -------------------------------------------------------------------
+# BFS MODIFICADO:
+# Encontra caminho entre u e v sem usar a aresta proibida (ban_u, ban_v),
+# e usando apenas arestas com banda >= W.
+# -------------------------------------------------------------------
+def bfs_alternativo(adj, u, v, W, ban_u, ban_v):
+    fila = deque([u])
+    visit = {u}
 
-# PRIM – Gera a Árvore Geradora Mínima (AGM)
-#
-# adj[u] = lista de tuplas (v, peso, banda)
-# A AGM é representada como lista de arestas (u, v)
-def prim_agm(adj):
-    """
-    Executa PRIM para gerar a árvore geradora mínima.
-    adj[u] = lista (v, peso, banda)
-    Retorna lista de arestas (u, v)
-    """
+    # Queremos encontrar caminho alternativo U → V
+    # mas sem poder usar a aresta da MST (ban_u, ban_v)
+    while fila:
+        x = fila.popleft()
 
-    n = len(adj)                       # número de vértices
-    visited = [False] * n              # indica se o vértice já foi inserido na AGM
-    mst_edges = []                     # lista final de arestas da AGM
+        if x == v:
+            return True   # caminho alternativo encontrado
 
-    pq = [(0, 0, -1)]                  # heap: (peso, vértice atual, pai)
-                                       # começa pelo vértice 0 com custo 0
-
-    while pq:
-        w, u, parent = heappop(pq)     # remove menor peso disponível no heap
-
-        if visited[u]:                 # se já foi incluído na AGM, ignora
-            continue
-
-        visited[u] = True              # marca que entrou na AGM
-
-        if parent != -1:
-            mst_edges.append((parent, u))  # adiciona aresta escolhida
-
-        # examina todos vizinhos de u
-        for v, peso, banda in adj[u]:
-            if not visited[v]:
-                # empurra para heap usando peso como chave de minimização
-                heappush(pq, (peso, v, u))
-
-    return mst_edges
-
-
-# BFS filtrando por banda mínima
-# Verifica se há caminho entre u e v usando apenas arestas
-# cuja banda >= W.
-def existe_caminho(adj, u, v, W):
-    """
-    Verifica se existe caminho entre u e v usando apenas arestas banda >= W.
-    BFS simples.
-    """
-
-    from collections import deque
-    q = deque([u])              # fila do BFS
-    visited = {u}               # conjunto de vértices visitados
-
-    while q:
-        x = q.popleft()         # remove da fila
-
-        if x == v:              # chegou ao destino
-            return True
-
-        # explora vizinhos respeitando banda mínima
         for y, peso, banda in adj[x]:
-            if banda >= W and y not in visited:
-                visited.add(y)
-                q.append(y)
 
-    return False                # nenhum caminho respeitou banda mínima
+            # NÃO usar a aresta (ban_u, ban_v) nem (ban_v, ban_u)
+            if (x == ban_u and y == ban_v) or (x == ban_v and y == ban_u):
+                continue
+
+            # Respeitar banda mínima
+            if banda < W:
+                continue
+
+            if y not in visit:
+                visit.add(y)
+                fila.append(y)
+
+    return False
 
 
-# Verifica redundância para cada aresta da AGM.
-# A redundância exige que entre cada aresta (u, v) da AGM
-# exista um segundo caminho alternativo que respeite banda >= W.
-def redundancia(adj, W):
-    """
-    adj[u] = (v, custo, banda)
-    W = banda mínima
+# -------------------------------------------------------------------
+# ALGORITMO PRINCIPAL
+#
+# mst_edges: lista de arestas da MST já fornecida
+# adj: grafo completo com custo e banda
+# W: banda mínima
+#
+# Retorna lista de arestas externas que geram redundância
+#         OU None se impossível
+# -------------------------------------------------------------------
+def encontrar_redundancias(adj, mst_edges, W):
 
-    Retorna lista de arestas extras necessárias ou None se impossível.
-    """
+    redundantes = []
 
-    mst_edges = prim_agm(adj)           # AGM gerada pela engenharia
-    extras = []                         # arestas redundantes encontradas
-
-    # Para cada aresta da AGM, verifica se existe outro caminho alternativo
+    # Para cada aresta da MST precisamos encontrar um segundo caminho
     for u, v in mst_edges:
 
-        # Se NÃO existir caminho alternativo com banda mínima W, então
-        # a rede não é redundante.
-        if not existe_caminho(adj, u, v, W):
-            return None  # impossível garantir redundância
+        # Tentar encontrar caminho alternativo
+        ok = bfs_alternativo(adj, u, v, W, ban_u=u, ban_v=v)
 
-        # Caso exista, apenas registramos que a redundância foi satisfeita
-        extras.append((u, v))
+        if not ok:
+            return None   # impossível garantir redundância
 
-    return extras
+        # Agora precisamos registrar QUAL aresta externa foi usada.
+        #
+        # Para isso, procuramos uma aresta externa (a,b)
+        # que permita banda >= W e que forme ciclo com (u,v).
+        #
+        # Versão simples: vamos procurar QUALQUER aresta externa com banda >= W
+        # que conecte dois nós do caminho u→v sem passar pela própria (u,v).
+        #
+        # Observação:
+        # Aqui estamos pegando a primeira aresta externa possível.
+        # Em versões avançadas faríamos o rastreamento real do ciclo.
+        for a in range(len(adj)):
+            for b, peso, banda in adj[a]:
 
+                # Ignorar aresta da própria MST
+                if (a, b) in mst_edges or (b, a) in mst_edges:
+                    continue
 
-# ANÁLISE COMPLETA DE COMPLEXIDADE
+                # Banda mínima
+                if banda < W:
+                    continue
 
-# Suponha:
-#   V = número de vértices
-#   E = número de arestas
-#
-# 1) prim_agm(adj)
-#    - Cada aresta pode ser empurrada para o heap no máximo uma vez.
-#    - heappush / heappop custam O(log V)
-#    - Custo total:  O(E log V)
-#
-# 2) existe_caminho(adj, u, v, W)
-#    - BFS limitado pelas arestas válidas
-#    - No pior caso examina todas as arestas uma vez:  O(V + E)
-#
-# 3) redundancia(adj, W)
-#    - Chama PRIM:                        O(E log V)
-#    - Para cada aresta da AGM (são V - 1 arestas):
-#         chama existe_caminho → O(V + E)
-#
-#    Custo total:
-#        O(E log V) + (V - 1) * O(V + E)
-#      = O(E log V + V*(V + E))
-#
-#    Para grafos densos (E ≈ V²):
-#        O(V² log V + V*(V + V²)) = O(V³)
-#
-#    Para grafos esparsos (E ≈ V):
-#        O(V log V + V*(2V)) = O(V²)
-#
-#
-# COMPLEXIDADE FINAL DA FUNÇÃO redundancia
-#
-#        Θ(V*(V + E))          no pior caso
-#
-# Em grafos densos → Θ(V³)
-# Em grafos esparsos → Θ(V²)
+                # Se esta aresta permite caminho alternativo, serve como redundância
+                if bfs_alternativo(adj, u, v, W, ban_u=u, ban_v=v):
+                    redundantes.append((a, b))
+                    break
+
+            else:
+                continue
+            break
+
+    return redundantes

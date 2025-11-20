@@ -268,12 +268,10 @@ def pontes_no_grafo(graph: GraphList):
     # lista final de pontes
     pontes = []
 
-    # ---------------------------------------------------------
     # DFS que calcula tin[], low[] e identifica pontes.
     # Argumentos:
     #   u      = vértice atual
     #   parent = pai de u na DFS (para não voltar por onde veio)
-    # ---------------------------------------------------------
     def dfs(u, parent):
         nonlocal tempo  # permite modificar 'tempo' definido fora da função
 
@@ -296,13 +294,13 @@ def pontes_no_grafo(graph: GraphList):
                 # pois v pode alcançar ancestrais de u
                 low[u] = min(low[u], low[v])
 
-                # ---------------------------------------------------------
+        
                 # Checagem da condição de ponte:
                 # low[v] > tin[u]  significa que NÃO há caminho alternativo
                 # para voltar a u ou seus ancestrais a partir de v.
                 #
                 # Logo, a única ligação entre os dois lados do grafo é (u, v).
-                # ---------------------------------------------------------
+        
                 if low[v] > tin[u]:
                     # armazenamos a ponte em ordem crescente (u, v)
                     pontes.append(tuple(sorted((u, v))))
@@ -314,10 +312,8 @@ def pontes_no_grafo(graph: GraphList):
                 # mostrando que u pode voltar a um ancestral via v.
                 low[u] = min(low[u], tin[v])
 
-    # ---------------------------------------------------------
     # A DFS pode iniciar de qualquer vértice, mas o grafo pode
     # ter múltiplas componentes, então rodamos para todos.
-    # ---------------------------------------------------------
     for i in range(N):
         if tin[i] == -1:   # ainda não visitado
             dfs(i, -1)     # não tem pai, então parent = -1
@@ -523,36 +519,74 @@ def cidades_alcancaveis(graph: GraphList):
     return sum(visit)
 
 
-"""10)Há N templos interligados por corredores subterrâneos bidirecionais.
-Alguns corredores são frágeis — se forem destruídos, podem dividir a rede de templos em partes desconectadas.
-Descubra quais corredores são críticos, ou seja, se forem removidos, a conexão entre os templos será perdida."""
+"""10)Há N templos interligados por corredores subterrâneos
+bidirecionais. Alguns corredores são frágeis — se forem
+destruídos, podem dividir a rede de templos em partes
+desconectadas. Descubra quais corredores são críticos,
+ou seja, se forem removidos, a conexão entre os templos
+será perdida."""
 
 def pontes_criticas(graph: GraphList):
+    # Número total de vértices (templos)
     N = graph.num_vertices
+
+    # 'tempo' é um contador global usado para marcar a ordem de descoberta (tin)
     tempo = 0
-    tin = [-1]*N
-    low = [-1]*N
+
+    # tin[u] = tempo em que o vértice u foi descoberto pela DFS
+    tin = [-1] * N
+
+    # low[u] = menor tempo de descoberta alcançável a partir de u
+    # seguindo qualquer quantidade de arestas da DFS (incluindo retorno)
+    low = [-1] * N
+
+    # Lista final onde serão guardadas as pontes (corredores críticos)
     pontes = []
 
+    # FUNÇÃO DFS (profundidade) PARA DETECTAR PONTES
     def dfs(u, parent):
         nonlocal tempo
+        
+        # Avança o tempo global e marca o tempo de descoberta de u
         tempo += 1
-        tin[u] = low[u] = tempo
+        tin[u] = low[u] = tempo  
 
+        # Percorre todos os vizinhos de u
         for v, _ in graph.adj_list[u]:
-            if v == parent: 
+
+            # Ignora a aresta que volta para o "pai" (parent)
+            if v == parent:
                 continue
+
+            # Se v ainda não foi visitado, seguimos a DFS
             if tin[v] == -1:
                 dfs(v, u)
+
+                # Após retornar da DFS de v, atualizamos low[u]
                 low[u] = min(low[u], low[v])
+
+                # -----------------------------------------------------
+                # CONDIÇÃO DE PONTE:
+                # se low[v] > tin[u], NÃO existe caminho alternativo
+                # para voltar a u ou a algum ancestral.
+                # Ou seja, essa aresta é crítica.
+                # -----------------------------------------------------
                 if low[v] > tin[u]:
                     pontes.append(tuple(sorted((u, v))))
+
             else:
+                # Encontramos uma aresta de retorno (back-edge)
+                # que liga u a um ancestral.
+                # Isso diminui o valor de low[u].
                 low[u] = min(low[u], tin[v])
 
+    # Roda DFS a partir de todos os vértices não visitados
+    # (importante em grafos desconexos)
     for i in range(N):
         if tin[i] == -1:
-            dfs(i, -1)
+            dfs(i, -1)  # -1 indica que não há "pai" no início
 
+    # Ordenamos para facilitar leitura
     pontes.sort()
+
     return pontes
